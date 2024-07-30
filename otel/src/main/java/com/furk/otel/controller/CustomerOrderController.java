@@ -1,9 +1,9 @@
 package com.furk.otel.controller;
 
 import com.furk.otel.entity.CustomerOrder;
-import com.furk.otel.service.CustomerService;
 import com.furk.otel.service.CustomerOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,46 +14,35 @@ import java.util.List;
 public class CustomerOrderController {
     @Autowired
     private CustomerOrderService customerOrderService;
-    @Autowired
-    private CustomerService customerService;
 
     @PostMapping
     public ResponseEntity<CustomerOrder> createOrder(@RequestBody CustomerOrder order) {
-        return customerService.getCustomer(order.getCustomer().getId())
-                .map(customer -> {
-                    order.setCustomer(customer);
-                    return ResponseEntity.ok(customerOrderService.saveOrder(order));
-                })
-                .orElseGet(() -> ResponseEntity.badRequest().build());
+        CustomerOrder savedOrder = customerOrderService.createOrder(order);
+        return new ResponseEntity<>(savedOrder, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerOrder> getOrderById(@PathVariable Long id) {
-        return customerOrderService.getOrder(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        CustomerOrder order = customerOrderService.getOrder(id);
+        return new ResponseEntity<>(order, HttpStatus.OK);
     }
 
     @GetMapping
-    public List<CustomerOrder> getAllOrders() {
-        return customerOrderService.getAllOrders();
+    public ResponseEntity<List<CustomerOrder>> getAllOrders() {
+        List<CustomerOrder> orders = customerOrderService.getAllOrders();
+        return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CustomerOrder> updateOrder(@PathVariable Long id, @RequestBody CustomerOrder orderDetails) {
-        return customerOrderService.getOrder(id)
-                .map(order -> {
-                    order.setOrderDate(orderDetails.getOrderDate());
-                    order.setStatus(orderDetails.getStatus());
-                    return ResponseEntity.ok(customerOrderService.saveOrder(order));
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        CustomerOrder updatedOrder = customerOrderService.updateOrder(id, orderDetails);
+        return new ResponseEntity<>(updatedOrder, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         customerOrderService.deleteOrder(id);
-        return ResponseEntity.noContent().build();
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
 
